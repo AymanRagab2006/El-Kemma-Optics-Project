@@ -1781,7 +1781,6 @@ class _SearchPrescriptionWindowState extends State<SearchPrescriptionWindow> {
 
   Future<void> searchingResults() async{
 
-    final MySqlConnection connection = await getDBConnection();
 
     String searchFilters = "";
     String query = '';

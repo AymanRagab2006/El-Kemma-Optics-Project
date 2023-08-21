@@ -571,7 +571,6 @@ class _FindClientWindowState extends State<FindClientWindow> {
 
   Future<void> findClient() async {
 
-    final MySqlConnection connection = await getDBConnection();
 
     String client_Name = selectedOption.toString();
     String phone = phoneNumberController.text;
@@ -584,11 +583,7 @@ class _FindClientWindowState extends State<FindClientWindow> {
     List<Map<String, dynamic>> fetchedData = await getData(query, params);
     int client_Id = int.parse(fetchedData[0]['client_id']);
 
-    // Construct the SQL query to select the newest row based on prescription_date and clientId
-    final results = await connection.query(
-      'SELECT * FROM prescriptions WHERE client_id = ? ORDER BY prescription_date DESC LIMIT 1',
-      [client_Id],
-    );
+
 
     query = 'SELECT * FROM prescriptions WHERE client_id = ? ORDER BY prescription_date DESC LIMIT 1';
     params = [client_Id];
@@ -758,7 +753,6 @@ class _FindClientWindowState extends State<FindClientWindow> {
 
   Future<void> insertClientData() async {
 
-    final MySqlConnection connection = await getDBConnection();
     String name = clientName2.text;
     String phone1 = phoneNumber1.text;
     String phone2 = phoneNumber2.text;
