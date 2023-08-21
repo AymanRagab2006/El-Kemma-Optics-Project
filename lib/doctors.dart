@@ -300,6 +300,22 @@ class _UpdateDoctorWindowState extends State<UpdateDoctorWindow> {
     return TimeOfDay(hour: hour, minute: minute);
   }
 
+  String? formatTimeOfDay(TimeOfDay? timeOfDay) {
+    if (timeOfDay != null) {
+      final now = DateTime.now();
+      final dateTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        timeOfDay.hour,
+        timeOfDay.minute,
+      );
+      final formattedTime = DateFormat('HH:mm:ss').format(dateTime);
+      return formattedTime;
+    }
+    return null;
+  }
+
   void getDoctorData() async {
 
     String query = '';
@@ -325,6 +341,8 @@ class _UpdateDoctorWindowState extends State<UpdateDoctorWindow> {
 
         totalPrescriptionsNumber = 0;
         doctorWorkingHours = [];
+        workingHours.clear();
+        selectedBirthDate = null;
       });
     }
 
@@ -360,6 +378,49 @@ class _UpdateDoctorWindowState extends State<UpdateDoctorWindow> {
       }
       print(workingHours);
     }
+  }
+
+  void updateDoctorData() async {
+
+
+    String query = '';
+    List<dynamic> params = [];
+
+    print(doctorID);
+
+    query = 'update doctors set doctor_birth_date = ?, doctor_gender = ? where doctor_id = ?';
+    params = [selectedBirthDate.toString(), _selectedDoctorGender.toString(), doctorID];
+    await executeQuery(query, params);
+
+    query = 'delete from doctors_working_hours where doctor_id = ?';
+    params = [doctorID];
+    await executeQuery(query, params);
+
+    for (WorkingShift shift in workingHours) {
+
+      String? startTime = formatTimeOfDay(shift.startTime);
+      String? endTime = formatTimeOfDay(shift.endTime);
+
+      query = 'insert into doctors_working_hours (doctor_id, day, start_time, end_time) values (?, ?, ?, ?)';
+      params = [doctorID, shift.day, startTime, endTime];
+      await executeQuery(query, params);
+    }
+
+    setState(() {
+      doctorNameController.clear();
+      isDoctorNameFound = false;
+      doctorID = 0;
+      doctorName = 'لا يوجد';
+      doctorPhone = 'لا يوجد';
+      doctorGender = 'لا يوجد';
+      doctorBirthDate = 'لا يوجد';
+      selectedBirthDate = null;
+      _selectedDoctorGender = null;
+
+      totalPrescriptionsNumber = 0;
+      doctorWorkingHours = [];
+      workingHours.clear();
+    });
   }
 
 
@@ -581,13 +642,7 @@ class _UpdateDoctorWindowState extends State<UpdateDoctorWindow> {
               ),
               SizedBox(height: 20,),
 
-              ElevatedButton(
-                onPressed: () {
-                  addWorkingShift('السبت', null, null); // You can provide default values for startTime and endTime
-                },
 
-                child: const Text("اضافة موعد عمل"),
-              ),
               for (int i = 0; i < workingHours.length; i++)
                 WorkingHoursRow(
                   // Pass the list of days of the week and the selected day to the row
@@ -615,6 +670,38 @@ class _UpdateDoctorWindowState extends State<UpdateDoctorWindow> {
                     removeWorkingHours(i);
                   },
                 ),
+
+              ElevatedButton(
+                onPressed: () {
+                  addWorkingShift('السبت', null, null); // You can provide default values for startTime and endTime
+                },
+                style: ButtonStyle(
+                  minimumSize: MaterialStateProperty.all(const Size(100, 25)),
+                ),
+
+                child: const Text("اضافة موعد عمل"),
+              ),
+
+              SizedBox(height: 50,),
+
+              ElevatedButton(
+                onPressed: (isDoctorNameFound) ? () {
+                  updateDoctorData();
+                  showMessage(context, "تم تحديث بيانات الطبيب بنجاح");
+                } : null,
+                style: ButtonStyle(
+                  minimumSize: MaterialStateProperty.all(const Size(100, 25)),
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                    ),
+                  ),
+                ),
+                child: const Text(
+                  "تحديث البيانات",
+                  style: TextStyle(fontSize: 20),
+                ),
+              ),
             ],
           ),
         ),
@@ -883,12 +970,7 @@ class _AddDoctorWindowState extends State<AddDoctorWindow> {
 
               SizedBox(height: 20,),
 
-              ElevatedButton(
-                onPressed: () {
-                  addWorkingShift('السبت', null, null); // You can provide default values for startTime and endTime
-                },
-                child: const Text("اضافة موعد عمل"),
-              ),
+
               // Display working hours rows
               for (int i = 0; i < workingHours.length; i++)
                 WorkingHoursRow(
@@ -917,6 +999,17 @@ class _AddDoctorWindowState extends State<AddDoctorWindow> {
                     removeWorkingHours(i);
                   },
                 ),
+
+              ElevatedButton(
+                onPressed: () {
+                  addWorkingShift('السبت', null, null); // You can provide default values for startTime and endTime
+                },
+                style: ButtonStyle(
+                  minimumSize: MaterialStateProperty.all(const Size(150, 25)),
+                ),
+                child: const Text("اضافة موعد عمل"),
+              ),
+
               SizedBox(height: 20,),
               ElevatedButton(
                 style: ButtonStyle(
