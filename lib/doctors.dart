@@ -836,7 +836,7 @@ class _AddDoctorWindowState extends State<AddDoctorWindow> {
       body: SingleChildScrollView(
         child: Container(
           alignment: Alignment.topCenter,
-          padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
@@ -852,23 +852,23 @@ class _AddDoctorWindowState extends State<AddDoctorWindow> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Directionality(
-                      textDirection: ui.TextDirection.rtl,
-                      child: Flexible(
-                        child: SizedBox(
-                          width: 300,
-                          height: 90, // Set the desired width here
-                          child: TextFormField(
-                            textAlign: TextAlign.right,
-                            controller: doctorName,
-                            decoration: const InputDecoration(
-                              labelText: "اسم الطبيب",
-                              border: OutlineInputBorder(),
-                            ),
-                            style: TextStyle(fontSize: 15),
-                            keyboardType: TextInputType.name,
+                    textDirection: ui.TextDirection.rtl,
+                    child: Flexible(
+                      child: SizedBox(
+                        width: 300,
+                        height: 90, // Set the desired width here
+                        child: TextFormField(
+                          textAlign: TextAlign.right,
+                          controller: doctorName,
+                          decoration: const InputDecoration(
+                            labelText: "اسم الطبيب",
+                            border: OutlineInputBorder(),
                           ),
+                          style: TextStyle(fontSize: 15),
+                          keyboardType: TextInputType.name,
                         ),
                       ),
+                    ),
                   )
                 ],
               ),
