@@ -1,3 +1,4 @@
+import 'package:el_kemma_optics/functions.dart';
 import 'package:excel/excel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +9,9 @@ import 'package:flutter/src/painting/box_border.dart' as box;
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:open_file/open_file.dart';
+import 'package:dropdown_search/dropdown_search.dart';
+
+
 
 
 
@@ -53,21 +57,21 @@ class LensesWindow extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 30),
-              // ElevatedButton(
-              //   onPressed: () {
-              //     // Navigator.push(
-              //     //   context,
-              //     //   MaterialPageRoute(builder: (context) => SearchPrescriptionWindow()),
-              //     // );
-              //   },
-              //   style: ButtonStyle(
-              //     minimumSize: MaterialStateProperty.all(const Size(230, 35)), // Set the minimum dimensions
-              //   ),
-              //   child: const Text(
-              //     'اضافة فاتورة شراء',
-              //     style: TextStyle(fontSize: 17),
-              //   ),
-              // ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => LensPurchaseWindow()),
+                  );
+                },
+                style: ButtonStyle(
+                  minimumSize: MaterialStateProperty.all(const Size(225, 35)), // Set the minimum dimensions
+                ),
+                child: const Text(
+                  'اضافة فاتورة شراء',
+                  style: TextStyle(fontSize: 17),
+                ),
+              ),
               const SizedBox(height: 30),
               // ElevatedButton(
               //   onPressed: () {
@@ -106,20 +110,19 @@ class LensesWindow extends StatelessWidget {
 }
 
 
-class AddLensWindow extends StatefulWidget {
-  const AddLensWindow({Key? key}) : super(key: key);
-
-  @override
-  _AddLensWindowState createState() => _AddLensWindowState();
-}
-
-
 class LensData {
   String color = '';
   String price = '';
   String quantity = '';
 }
 
+
+class AddLensWindow extends StatefulWidget {
+  const AddLensWindow({Key? key}) : super(key: key);
+
+  @override
+  _AddLensWindowState createState() => _AddLensWindowState();
+}
 
 class _AddLensWindowState extends State<AddLensWindow> {
 
@@ -140,10 +143,26 @@ class _AddLensWindowState extends State<AddLensWindow> {
     });
   }
 
-  void printData() {
+  void addLensesData() async{
+
+    String name = lensNameController.text;
+    double price = double.parse(lensPriceController.text);
+
+    String query = '';
+    List<dynamic> params = [];
+
     for (LensData lensData in lensDataList) {
-      print('Color: ${lensData.color}, Price: ${lensPriceController.text}, Quantity: ${lensData.quantity}');
+      query = 'insert into lenses (lens_name, lens_color, lens_quantity, lens_price) values (?, ?, ?, ?)';
+      params = [name, lensData.color, lensData.quantity, price];
+      await executeQuery(query, params);
+      // print('Name: $name, Color: ${lensData.color}, Price: ${lensPriceController.text}, Quantity: ${lensData.quantity}');
     }
+
+    setState(() {
+      lensNameController.clear();
+      lensPriceController.clear();
+      lensDataList.clear();
+    });
   }
 
 
@@ -286,7 +305,7 @@ class _AddLensWindowState extends State<AddLensWindow> {
                 child: Text('اضافة لون جديد'),
               ),
 
-              SizedBox(height: 40),
+              SizedBox(height: 60),
               ElevatedButton(
                 style: ButtonStyle(
                   minimumSize: MaterialStateProperty.all(const Size(150, 25)),
@@ -297,14 +316,135 @@ class _AddLensWindowState extends State<AddLensWindow> {
                   ),
                 ),
                 onPressed: () {
-                  printData();
+                  addLensesData();
+                  showMessage(context, 'تمت اضافة العدسة بنجاح');
                 },
-                child: Text(
+                child: const Text(
                   'اضافة العدسة',
                   style: TextStyle(fontSize: 20),
                 ),
 
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+
+class LensPurchaseWindow extends StatefulWidget {
+  const LensPurchaseWindow({Key? key}) : super(key: key);
+
+  @override
+  _LensPurchaseWindowState createState() => _LensPurchaseWindowState();
+}
+
+class _LensPurchaseWindowState extends State<LensPurchaseWindow> {
+
+  DateTime? selectedDate = DateTime.now();
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+      });
+    }
+  }
+
+  final List<String> options = [
+    'Option 1',
+    'Option 2',
+    'Option 3',
+    'Option 4',
+    'Option 5',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('مركز عيون'),
+      ),
+      body: SingleChildScrollView(
+        child: Container(
+          alignment: Alignment.topCenter,
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              const Text(
+                "اضافة فاتورة شراء عدسات",
+                style: TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 80),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Directionality(
+                    textDirection: ui.TextDirection.rtl,
+                    child: SizedBox(
+                      width: 300,
+                      height: 90,
+                      child: TextFormField(
+                        textAlign: TextAlign.right,
+                        onTap: () => _selectDate(context),
+                        controller: TextEditingController(
+                          text: selectedDate == null
+                              ? "اختار تاريخ عملية الشراء"
+                              : "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}",
+                        ),
+                        readOnly: true,
+                        decoration: InputDecoration(
+                          labelText: "تاريخ عملية الشراء",
+                          border: const OutlineInputBorder(),
+                          suffixIcon: IconButton(
+                            onPressed: () => _selectDate(context),
+                            icon: const Icon(Icons.calendar_today),
+                          ),
+                        ),
+                        style: const TextStyle(fontSize: 15),
+                      ),
+                    ),
+                  )
+                ],
+              ),
+              SizedBox(height: 30,),
+              // Row(
+              //   mainAxisAlignment: MainAxisAlignment.center,
+              //   children: [
+              //     Container(
+              //       width: 300,
+              //       child: DropdownSearch<String>(
+              //         popupProps: PopupProps.menu(
+              //           showSelectedItems: true,
+              //           showSearchBox: true,
+              //         ),
+              //         items: ["Brazil", "Italia", "Tunisia", 'Canada', 'Egypt', 'Palestine'],
+              //         dropdownDecoratorProps: DropDownDecoratorProps(
+              //           dropdownSearchDecoration: InputDecoration(
+              //             labelText: "Menu mode",
+              //           ),
+              //         ),
+              //         onChanged: print,
+              //         selectedItem: "Brazil",
+              //
+              //       ),
+              //     ),
+              //   ],
+              // ),
             ],
           ),
         ),
