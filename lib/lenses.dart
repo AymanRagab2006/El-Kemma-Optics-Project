@@ -1,3 +1,4 @@
+
 import 'package:el_kemma_optics/functions.dart';
 import 'package:excel/excel.dart';
 import 'package:flutter/material.dart';
@@ -110,10 +111,10 @@ class LensesWindow extends StatelessWidget {
 
 
 class LensData {
-  final String name ;
-  late final String color;
-  late final String quantity;
-  final String price;
+  String name ;
+  String color;
+  String quantity;
+  String price;
 
   LensData({
     required this.name,
@@ -136,6 +137,95 @@ class LensData {
     );
   }
 }
+
+
+class LensColorRow extends StatefulWidget {
+
+  final int rowNumber;
+  final VoidCallback onRemove;
+  final TextEditingController lensColor;
+  final TextEditingController lensQuantity;
+  final ValueChanged<String?> onLensColorChanged;
+  final ValueChanged<String?> onLensQuantityChanged;
+
+  LensColorRow({
+    required this.rowNumber,
+    required TextEditingController lensColor,
+    required TextEditingController lensQuantity,
+    required this.onLensColorChanged,
+    required this.onLensQuantityChanged,
+    required this.onRemove,
+  }) : lensQuantity = lensQuantity, lensColor = lensColor;
+
+  @override
+  _LensColorRowState createState() => _LensColorRowState();
+}
+
+class _LensColorRowState extends State<LensColorRow> {
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Directionality(
+        textDirection: ui.TextDirection.rtl,
+        child: Row(
+          children: [
+            Text('${widget.rowNumber}. '),
+            SizedBox(width: 10),
+
+            SizedBox(
+              width: 300,
+              child: TextFormField(
+                textAlign: TextAlign.left,
+
+                onChanged: widget.onLensColorChanged,
+                controller: widget.lensColor,
+
+                decoration: const InputDecoration(
+                  labelText: "اللون",
+                ),
+                style: TextStyle(fontSize: 15),
+                keyboardType: TextInputType.text,
+              ),
+            ),
+            SizedBox(width: 10),
+
+            SizedBox(
+              width: 150,
+              child: TextFormField(
+                textAlign: TextAlign.left,
+
+                onChanged: widget.onLensQuantityChanged,
+                controller: widget.lensQuantity,
+
+                decoration: const InputDecoration(
+                  labelText: "الكمية",
+                ),
+                style: TextStyle(fontSize: 15),
+                keyboardType: TextInputType.number,
+              ),
+            ),
+            SizedBox(width: 10),
+
+            GestureDetector(
+              onTap: widget.onRemove,
+              child: const Icon(
+                Icons.remove, // Replace this with your preferred 'X' icon
+                color: Colors.grey,
+                // You can customize the color of the 'X' icon here
+                size: 25, // You can customize the size of the 'X' icon here
+              ),
+            ),
+            SizedBox(height: 100),
+          ],
+        ),
+      ),
+    );
+  }
+
+}
+
+
 
 
 class AddLensWindow extends StatefulWidget {
@@ -184,6 +274,9 @@ class _AddLensWindowState extends State<AddLensWindow> {
       lensPriceController.clear();
       lensDataList.clear();
     });
+
+    showMessage(context, 'تمت اضافة العدسة بنجاح');
+
   }
 
 
@@ -259,65 +352,26 @@ class _AddLensWindowState extends State<AddLensWindow> {
                   ),
                 ],
               ),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Column(
-                  children: lensDataList.asMap().entries.map((entry) {
-                    int index = entry.key;
-                    LensData lensData = entry.value;
 
-                    return Directionality(
-                      textDirection: ui.TextDirection.rtl,
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 250,
-                            child: TextFormField(
-                              textAlign: TextAlign.left,
-                              onChanged: (newColor) {
-                                setState(() {
-                                  lensData.color = newColor;
-                                });
-                              },
-                              initialValue: lensData.color,
-                              decoration: InputDecoration(labelText: 'لون العدسة'),
-                              style: TextStyle(fontSize: 15),
-                              keyboardType: TextInputType.name,
-                            ),
-                          ),
-                          SizedBox(width: 10),
-                          SizedBox(
-                            width: 100,
-                            child: TextFormField(
-                              textAlign: TextAlign.left,
-                              onChanged: (newQuantity) {
-                                setState(() {
-                                  lensData.quantity = newQuantity;
-                                });
-                              },
-                              initialValue: lensData.quantity,
-                              decoration: InputDecoration(labelText: 'الكمية'),
-                              style: TextStyle(fontSize: 15),
-                              keyboardType: TextInputType.number,
-                            ),
-                          ),
-                          SizedBox(width: 10),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.remove,
-                              color: Colors.grey, // Customize the color of the 'X' icon here
-                              size: 30,
-                            ),
-                            onPressed: () {
-                              removeColorInput(index);
-                            },
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
+              for(int i = 0; i < lensDataList.length; i++)
+                LensColorRow(
+                  rowNumber: i + 1,
+                  lensColor: TextEditingController(text: lensDataList[i].color),
+                  lensQuantity: TextEditingController(text: lensDataList[i].quantity),
+                  onLensColorChanged: (newColor) {
+                      lensDataList[i] = lensDataList[i].copyWith(color: newColor);
+                    },
+                    onLensQuantityChanged: (newQuantity){
+                      lensDataList[i] = lensDataList[i].copyWith(quantity: newQuantity);
+                    },
+                    onRemove: () {
+
+                      setState(() {
+                        removeColorInput(i);
+                      });
+
+                    },
                 ),
-              ),
 
 
               SizedBox(height: 20,),
@@ -343,7 +397,7 @@ class _AddLensWindowState extends State<AddLensWindow> {
                 ),
                 onPressed: () {
                   addLensesData();
-                  showMessage(context, 'تمت اضافة العدسة بنجاح');
+
                 },
                 child: const Text(
                   'اضافة العدسة',
@@ -362,8 +416,7 @@ class _AddLensWindowState extends State<AddLensWindow> {
 
 
 
-
-class LensRow extends StatelessWidget {
+class LensRow extends StatefulWidget {
   final int rowNumber;
   final List<String> lensNames;
   final List<String> lensColors;
@@ -371,6 +424,7 @@ class LensRow extends StatelessWidget {
   final String? selectedLensName;
   final String? selectedLensColor;
   final String? lensQuantity;
+  final TextEditingController controller;
   final ValueChanged<String?> onLensNameChanged;
   final ValueChanged<String?> onLensColorChanged;
   final ValueChanged<String?> onLensQuantityChanged;
@@ -386,103 +440,99 @@ class LensRow extends StatelessWidget {
     required this.onLensColorChanged,
     required this.lensQuantity,
     required this.onLensQuantityChanged,
-  });
+    required TextEditingController controller,
+  }) : controller = controller;
 
   @override
-  Widget build(BuildContext context) {
-    return Directionality(
-        textDirection: ui.TextDirection.rtl,
-        child: Row(
-          children: [
-            Text('${rowNumber}. '),
-            SizedBox(width: 10),
-            SizedBox(
-              width: 200,
-              child: DropdownSearch<String>(
-                popupProps: PopupProps.menu(
-                  showSelectedItems: true,
-                  showSearchBox: true,
-                ),
-                items: lensNames,
-                dropdownDecoratorProps: DropDownDecoratorProps(
-                  dropdownSearchDecoration: InputDecoration(
-                    labelText: "اسم العدسة",
-                  ),
-                ),
-                // onChanged: (String? newValue) {
-                //   setState(() {
-                //     selectedLensName = newValue;
-                //     lensData.name = newValue!;
-                //     // Additional logic related to lens name change
-                //   });
-                // },
-                onChanged: onLensNameChanged,
-                selectedItem: selectedLensName,
-              ),
-            ),
-            SizedBox(width: 20),
-            SizedBox(
-              width: 200,
-              child: DropdownSearch<String>(
-                popupProps: PopupProps.menu(
-                  showSelectedItems: true,
-                  showSearchBox: true,
-                ),
-                items: lensColors,
-                dropdownDecoratorProps: DropDownDecoratorProps(
-                  dropdownSearchDecoration: InputDecoration(
-                    labelText: "لون العدسة",
-                  ),
-                ),
-                // onChanged: (String? newValue) {
-                //   setState(() {
-                //     selectedLensColor = newValue;
-                //     lensData.color = newValue!;
-                //     // Additional logic related to lens color change
-                //   });
-                // },
-                onChanged: onLensColorChanged,
-                selectedItem: selectedLensColor,
-              ),
-            ),
-            SizedBox(width: 20),
-            SizedBox(
-              width: 150,
-              child: TextFormField(
-                textAlign: TextAlign.left,
-                // onChanged: (newQuantity) {
-                //   setState(() {
-                //     lensData.quantity = newQuantity;
-                //     // Additional logic related to lens quantity change
-                //   });
-                // },
-                onChanged: onLensQuantityChanged,
-                // initialValue: ,
-                // controller: TextEditingController(text: lensQuantity),
-                decoration: const InputDecoration(
-                  labelText: "الكمية",
-                ),
-                style: TextStyle(fontSize: 15),
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-              ),
-            ),
-            SizedBox(width: 10),
-            GestureDetector(
-              onTap: onRemove2,
-              child: const Icon(
-                Icons.remove, // Replace this with your preferred 'X' icon
-                color: Colors.grey,
-                // You can customize the color of the 'X' icon here
-                size: 25, // You can customize the size of the 'X' icon here
-              ),
-            ),
-            SizedBox(height: 100),
-          ],
-        ),
-    );
+  _LensRowState createState() => _LensRowState();
+}
 
+class _LensRowState extends State<LensRow> {
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Directionality(
+      textDirection: ui.TextDirection.rtl,
+      child: Row(
+        children: [
+          Text('${widget.rowNumber}. '),
+          SizedBox(width: 10),
+          SizedBox(
+            width: 200,
+            child: DropdownSearch<String>(
+              popupProps: PopupProps.menu(
+                showSelectedItems: true,
+                showSearchBox: true,
+              ),
+              items: widget.lensNames,
+              dropdownDecoratorProps: DropDownDecoratorProps(
+                dropdownSearchDecoration: InputDecoration(
+                  labelText: "اسم العدسة",
+                ),
+              ),
+
+              onChanged: widget.onLensNameChanged,
+              selectedItem: widget.selectedLensName,
+            ),
+          ),
+          SizedBox(width: 20),
+          SizedBox(
+            width: 200,
+            child: DropdownSearch<String>(
+              popupProps: PopupProps.menu(
+                showSelectedItems: true,
+                showSearchBox: true,
+              ),
+              items: widget.lensColors,
+              dropdownDecoratorProps: DropDownDecoratorProps(
+                dropdownSearchDecoration: InputDecoration(
+                  labelText: "لون العدسة",
+                ),
+              ),
+
+              onChanged: widget.onLensColorChanged,
+              selectedItem: widget.selectedLensColor,
+            ),
+          ),
+          SizedBox(width: 20),
+          SizedBox(
+            width: 150,
+            child: TextFormField(
+              textAlign: TextAlign.left,
+
+
+              onChanged: widget.onLensQuantityChanged,
+              controller: widget.controller,
+
+
+              decoration: const InputDecoration(
+                labelText: "الكمية",
+              ),
+              style: TextStyle(fontSize: 15),
+              keyboardType: TextInputType.number,
+            ),
+          ),
+          SizedBox(width: 10),
+          GestureDetector(
+            onTap: widget.onRemove2,
+            child: const Icon(
+              Icons.remove, // Replace this with your preferred 'X' icon
+              color: Colors.grey,
+              // You can customize the color of the 'X' icon here
+              size: 25, // You can customize the size of the 'X' icon here
+            ),
+          ),
+          SizedBox(height: 100),
+        ],
+      ),
+    ));
   }
 }
+
+
+
+
 
 
 class LensPurchaseWindow extends StatefulWidget {
@@ -560,20 +610,34 @@ class _LensPurchaseWindowState extends State<LensPurchaseWindow> {
   void removeLensInput(int index) {
     setState(() {
       lensDataList.removeAt(index);
+
+
     });
+
   }
 
   void addLensPurchase() async {
-    for (LensData lensData in lensDataList) {
+    String query = 'update lenses set lens_quantity = lens_quantity + ? where lens_name = ? and lens_color = ?';
+    List<dynamic> params = [];
 
-      print('Name: ${lensData.name}, Color: ${lensData.color}, Quantity: ${lensData.quantity}');
+    for (int i = 0; i < lensDataList.length; i++) {
+      params = [lensDataList[i].quantity, lensDataList[i].name, lensDataList[i].color];
+      await executeQuery(query, params);
+
     }
+
+    showMessage(context, 'تمت اضافة العدسات الى المخزن بنجاح');
+    setState(() {
+      lensDataList.clear();
+    });
+
   }
 
   @override
   void initState() {
     super.initState();
     getLensNames();
+
   }
 
 
@@ -637,151 +701,89 @@ class _LensPurchaseWindowState extends State<LensPurchaseWindow> {
               const SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
 
-                // child: Directionality(
-                //   textDirection: ui.TextDirection.rtl,
-                //
-                //   child: Column(
-                //     children: lensDataList.asMap().entries.map((entry) {
-                //       int index = entry.key;
-                //       LensData lensData = entry.value;
-                //       int rowNumber = index + 1;
-                //       print(index);
-                //
-                //       return Directionality(
-                //         textDirection: ui.TextDirection.rtl,
-                //         child: Row(
-                //           children: [
-                //             Text('$rowNumber. '),
-                //             SizedBox(width: 10,),
-                //             SizedBox(
-                //               width: 200,
-                //               child: DropdownSearch<String>(
-                //                 popupProps: PopupProps.menu(
-                //                   showSelectedItems: true,
-                //                   showSearchBox: true,
-                //                 ),
-                //                 items: lensNames,
-                //                 dropdownDecoratorProps: DropDownDecoratorProps(
-                //                   dropdownSearchDecoration: InputDecoration(
-                //                     labelText: "اسم العدسة",
-                //                   ),
-                //                 ),
-                //                 onChanged: (String? newValue) {
-                //                   setState(() {
-                //                     selectedLensName = newValue;
-                //                     lensData.name = newValue!;
-                //                     getLensColors();
-                //                   });
-                //                 },
-                //                 // selectedItem: "Brazil",
-                //
-                //               ),
-                //             ),
-                //             SizedBox(width: 20),
-                //             SizedBox(
-                //               width: 200,
-                //               child: DropdownSearch<String>(
-                //                 popupProps: PopupProps.menu(
-                //                   showSelectedItems: true,
-                //                   showSearchBox: true,
-                //                 ),
-                //                 items: lensColors,
-                //                 dropdownDecoratorProps: DropDownDecoratorProps(
-                //                   dropdownSearchDecoration: InputDecoration(
-                //                     labelText: "لون العدسة",
-                //                   ),
-                //                 ),
-                //                 onChanged: (String? newValue) {
-                //                   setState(() {
-                //                     selectedLensColor = newValue;
-                //                     lensData.color = newValue!;
-                //                   });
-                //                 },
-                //                 // selectedItem: lensColors.isNotEmpty ? lensColors[0] : null,
-                //                 // selectedItem: lensData.color,
-                //               ),
-                //             ),
-                //             SizedBox(width: 20,),
-                //             SizedBox(
-                //                 width: 150,
-                //                 child: TextFormField(
-                //                   textAlign: TextAlign.left,
-                //                   // controller: lensQuantity,
-                //                   onChanged: (newQuantity) {
-                //                     setState(() {
-                //                       lensData.quantity = newQuantity;
-                //                     });
-                //                   },
-                //                   initialValue: lensData.quantity,
-                //                   decoration: const InputDecoration(
-                //                     labelText: "الكمية",
-                //                     // border: OutlineInputBorder(),
-                //                   ),
-                //                   style: TextStyle(fontSize: 15),
-                //                   keyboardType: TextInputType.numberWithOptions(decimal: true),
-                //                 )
-                //             ),
-                //             SizedBox(width: 10),
-                //             IconButton(
-                //               icon: const Icon(
-                //                 Icons.remove,
-                //                 color: Colors.grey, // Customize the color of the 'X' icon here
-                //                 size: 30,
-                //               ),
-                //               onPressed: () {
-                //                 removeLensInput(index);
-                //               },
-                //             ),
-                //             SizedBox(height: 100,),
-                //           ],
-                //         ),
-                //       );
-                //     }).toList(),
-                //   ),
-                // ),
+
               ),
 
-                  for (int i = 0; i < lensDataList.length; i++)
-                    LensRow(
-                      rowNumber: i + 1,
-                      lensNames: lensNames,
-                      lensColors: lensColors,
-                      selectedLensName: lensDataList[i].name,
-                      selectedLensColor: lensDataList[i].color,
-                      lensQuantity: lensDataList[i].quantity,
+                for (int i = 0; i < lensDataList.length; i++)
+                  LensRow(
 
-                      onLensNameChanged: (newName) {
-                        setState(() {
-                          lensDataList[i]  = lensDataList[i].copyWith(name: newName);
-                          print(newName);
-                          getLensColors(newName!);
-                        });
-                      },
+                    rowNumber: i + 1,
+                    lensNames: lensNames,
+                    lensColors: lensColors,
+                    selectedLensName: lensDataList[i].name,
+                    selectedLensColor: lensDataList[i].color,
+                    lensQuantity: lensDataList[i].quantity,
+                    controller: TextEditingController(text: lensDataList[i].quantity),
 
-                      onLensColorChanged: (newColor) {
-                        setState(() {
-                          lensDataList[i]  = lensDataList[i].copyWith(color: newColor);
-                        });
+                    onLensNameChanged: (newName) {
+                      setState(() {
+                        lensDataList[i]  = lensDataList[i].copyWith(name: newName);
+                        print(newName);
+                        getLensColors(newName!);
+                      });
+                    },
 
-                      },
+                    onLensColorChanged: (newColor) {
+                      setState(() {
+                        lensDataList[i] = lensDataList[i].copyWith(color: newColor);
+                      });
 
-                      onLensQuantityChanged: (newQuantity) {
-                        setState(() {
-                          print(newQuantity);
-                          print(lensDataList[i]);
-                          lensDataList[i]  = lensDataList[i].copyWith(quantity: newQuantity);
-                        });
+                    },
 
-                      },
+                    onLensQuantityChanged: (newQuantity) {
+                      // setState(() {
+                        // Check if newQuantity is not null or empty before updating
+                        // if (newQuantity != null && newQuantity.isNotEmpty) {
+                        //
+                        //   if(lensDataList[i].quantity.isEmpty) {
+                        //     lensDataList[i] = lensDataList[i].copyWith(quantity: newQuantity);
+                        //     print((int.parse(lensDataList[i].quantity) * 10));
+                        //   }
+                        //   else {
+                        //     print((int.parse(lensDataList[i].quantity) * 10));
+                        //     print((int.parse(newQuantity[0])));
+                        //     int v = (((int.parse(lensDataList[i].quantity) * 10) + (int.parse(newQuantity[0]))));
+                        //     print(v);
+                        //     lensDataList[i] = lensDataList[i].copyWith(quantity: v.toString());
+                        //   }
+                        //
+                        // }
 
-                      onRemove2: () {
+                        // if(newQuantity!.isEmpty || (newQuantity.length < lensDataList[i].quantity.length)){
+                        //   lensDataList[i] = lensDataList[i].copyWith(quantity: newQuantity);
+                        // }
+                        // else{
+                        //   String? sub = newQuantity.substring(1);
+                        //   String? f = newQuantity[0];
+                        //   // print(f);
+                        //   // print(sub);
+                        //   lensDataList[i] = lensDataList[i].copyWith(quantity: sub + f);
+                        // }
+                      // });
+                      // print(lensDataList[i].quantity);
+                      // print(newQuantity?.split('').reversed.join());
+                      //
+                      // lensDataList[i] = lensDataList[i].copyWith(quantity: newQuantity?.split('').reversed.join());
 
+                      // print(newQuantity);
+
+
+
+
+                      // print(lensDataList[i].quantity);
+
+                        lensDataList[i] = lensDataList[i].copyWith(quantity: newQuantity);
+
+
+                    },
+
+                    onRemove2: () {
+                      setState(() {
                         removeLensInput(i);
-                      },
-                    ),
+                      });
+                    },
 
-
-
+                  ),
 
 
               SizedBox(height: 30,),

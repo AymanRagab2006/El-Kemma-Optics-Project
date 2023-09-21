@@ -94,29 +94,29 @@ class DoctorsWindow extends StatelessWidget {
 }
 
 
-class WorkingShift {
-  final String day;
-  final TimeOfDay? startTime;
-  final TimeOfDay? endTime;
+                              class WorkingShift {
+                                final String day;
+                                final TimeOfDay? startTime;
+                                final TimeOfDay? endTime;
 
-  WorkingShift({
-    required this.day,
-    this.startTime,
-    this.endTime,
-  });
+                                WorkingShift({
+                                  required this.day,
+                                  this.startTime,
+                                  this.endTime,
+                                });
 
-  WorkingShift copyWith({
-    String? day,
-    TimeOfDay? startTime,
-    TimeOfDay? endTime,
-  }) {
-    return WorkingShift(
-      day: day ?? this.day,
-      startTime: startTime ?? this.startTime,
-      endTime: endTime ?? this.endTime,
-    );
-  }
-}
+                                WorkingShift copyWith({
+                                  String? day,
+                                  TimeOfDay? startTime,
+                                  TimeOfDay? endTime,
+                                }) {
+                                  return WorkingShift(
+                                    day: day ?? this.day,
+                                    startTime: startTime ?? this.startTime,
+                                    endTime: endTime ?? this.endTime,
+                                  );
+                                }
+                              }
 
 typedef StartTimeChangedCallback = void Function(TimeOfDay?, TimeOfDay?);
 typedef EndTimeChangedCallback = void Function(TimeOfDay?, TimeOfDay?);

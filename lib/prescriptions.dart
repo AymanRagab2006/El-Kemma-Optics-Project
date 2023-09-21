@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:dropdown_search/dropdown_search.dart';
 import 'package:el_kemma_optics/clients.dart';
 import 'package:el_kemma_optics/db_connection.dart';
 import 'package:el_kemma_optics/functions.dart';
@@ -3569,6 +3570,144 @@ class _SearchPrescriptionWindowState extends State<SearchPrescriptionWindow> {
 
 
 
+class LensRow extends StatefulWidget {
+
+  final int rowNumber;
+  final List<String> lensNames;
+  final List<String> lensColors;
+  final VoidCallback onRemove2;
+  final String? selectedLensName;
+  final String? selectedLensColor;
+  final TextEditingController lensQuantity;
+  final ValueChanged<String?> onLensNameChanged;
+  final ValueChanged<String?> onLensColorChanged;
+  final ValueChanged<String?> onLensQuantityChanged;
+
+  LensRow({
+    required this.rowNumber,
+    required this.lensNames,
+    required this.lensColors,
+    required this.onRemove2,
+    required this.selectedLensName,
+    required this.selectedLensColor,
+    required TextEditingController lensQuantity,
+    required this.onLensNameChanged,
+    required this.onLensColorChanged,
+    required this.onLensQuantityChanged,
+  }) : lensQuantity = lensQuantity;
+
+  @override
+  _LensRowState createState() => _LensRowState();
+}
+
+class _LensRowState extends State<LensRow> {
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Directionality(
+        textDirection: ui.TextDirection.rtl,
+        child: Row(
+          children: [
+            Text('${widget.rowNumber}. '),
+            SizedBox(width: 10),
+            SizedBox(
+              width: 200,
+              child: DropdownSearch<String>(
+                popupProps: PopupProps.menu(
+                  showSelectedItems: true,
+                  showSearchBox: true,
+                ),
+                items: widget.lensNames,
+                dropdownDecoratorProps: DropDownDecoratorProps(
+                  dropdownSearchDecoration: InputDecoration(
+                    labelText: "اسم العدسة",
+                  ),
+                ),
+
+                onChanged: widget.onLensNameChanged,
+                selectedItem: widget.selectedLensName,
+              ),
+            ),
+            SizedBox(width: 20),
+            SizedBox(
+              width: 200,
+              child: DropdownSearch<String>(
+                popupProps: PopupProps.menu(
+                  showSelectedItems: true,
+                  showSearchBox: true,
+                ),
+                items: widget.lensColors,
+                dropdownDecoratorProps: DropDownDecoratorProps(
+                  dropdownSearchDecoration: InputDecoration(
+                    labelText: "لون العدسة",
+                  ),
+                ),
+
+                onChanged: widget.onLensColorChanged,
+                selectedItem: widget.selectedLensColor,
+              ),
+            ),
+            SizedBox(width: 20),
+            SizedBox(
+              width: 150,
+              child: TextFormField(
+                textAlign: TextAlign.left,
+
+                onChanged: widget.onLensQuantityChanged,
+                controller: widget.lensQuantity,
+
+                decoration: const InputDecoration(
+                  labelText: "الكمية",
+                ),
+                style: TextStyle(fontSize: 15),
+                keyboardType: TextInputType.number,
+              ),
+            ),
+            SizedBox(width: 10),
+            GestureDetector(
+              onTap: widget.onRemove2,
+              child: const Icon(
+                Icons.remove, // Replace this with your preferred 'X' icon
+                color: Colors.grey,
+                // You can customize the color of the 'X' icon here
+                size: 25, // You can customize the size of the 'X' icon here
+              ),
+            ),
+            SizedBox(height: 100),
+          ],
+        ),
+      ));
+  }
+}
+
+
+
+class LensData {
+  String name ;
+  String color;
+  String quantity;
+
+  LensData({
+    required this.name,
+    required this.color,
+    required this.quantity,
+  });
+
+  LensData copyWith({
+    String? name,
+    String? color,
+    String? quantity,
+  }) {
+    return LensData(
+        name: name ?? this.name,
+        color: color ?? this.color,
+        quantity: quantity ?? this.quantity
+    );
+  }
+}
+
+
 
 class AddPrescriptionWindow extends StatefulWidget {
   final String text;
@@ -3608,169 +3747,82 @@ class _AddPrescriptionWindowState extends State<AddPrescriptionWindow> {
 
   List<String> prescriptionTypes = ["رمد", "نظارة", "عدسات", "عملية ليزك", "المياه البيضاء"];
 
-  List<String> lensTypes = [
-    "Acuvue 2",
-    "Bella",
-    "Bella elite",
-    "Bella glow",
-    "Bio(3)",
-    "Bio toric",
-    "Clear vision",
-    "Comfort",
-    "Dahab",
-    "Desio",
-    "Flexcon",
-    "Lens(s)",
-    "Magic",
-    "My lens",
-    "Oasys",
-    "Oasys toric",
-    "Pure vision 2",
-    "Soft toric",
-    "Zeiss",
-  ];
+  // List<String> lensTypes = [
+  //   "Acuvue 2",
+  //   "Bella",
+  //   "Bella elite",
+  //   "Bella glow",
+  //   "Bio(3)",
+  //   "Bio toric",
+  //   "Clear vision",
+  //   "Comfort",
+  //   "Dahab",
+  //   "Desio",
+  //   "Flexcon",
+  //   "Lens(s)",
+  //   "Magic",
+  //   "My lens",
+  //   "Oasys",
+  //   "Oasys toric",
+  //   "Pure vision 2",
+  //   "Soft toric",
+  //   "Zeiss",
+  // ];
 
+  List<LensData> lensDataList = [];
+
+  void addLensInput(String name, String color, String quantity) {
+    setState(() {
+      lensDataList.add(LensData(name: name, color: color, quantity: quantity));
+    });
+  }
+
+  void removeLensInput(int index) {
+    setState(() {
+      lensDataList.removeAt(index);
+    });
+  }
+
+  List<String> lensNames = [];
   List<String> lensColors = [];
 
-  List<String> solutionTypes = [
+  void getLensNames() async {
+    String query = 'select lens_name from lenses';
+    List<dynamic> params = [];
+    List<Map<String, dynamic>> fetchedData = await getData(query, params);
+    // List<String> namesList = fetchedData.map((item) => item['lens_name'] as String).toList();
+
+    List<String> namesList = fetchedData
+        .map((item) => item['lens_name'] as String)
+        .toSet()
+        .toList();
+
+    setState(() {
+      lensNames = namesList;
+    });
+    print(lensNames);
+  }
+
+  void getLensColors(String lensName) async {
+    String query = 'select lens_color from lenses where lens_name =  ?';
+    List<dynamic> params = [lensName];
+    List<Map<String, dynamic>> fetchedData = await getData(query, params);
+
+    List<String> colorsList = fetchedData.map((item) => item['lens_color'] as String).toList();
+
+    setState(() {
+      lensColors = colorsList;
+    });
+    print(lensColors);
+  }
+
+
+
+  List<String> solutionNames = [
     "bio true 60 ml",
     "Renu 60 ml",
     "Dahab 100 ml",
   ];
-
-  void UpdateLensColors() {
-
-    List<String> list = [];
-
-    setState(() {
-      lensColors.clear();
-      list.clear();
-      selectedLensColor = null;
-    });
-
-
-    List<String> myLensColors = [
-      "Blue",
-      "Capri",
-      "Light brown",
-      "Light gray",
-      "Light green",
-      "Oro brown",
-      "Oro gray",
-      "Oro hazel",
-      "Turquoise",
-    ];
-
-    List<String> magicLensColors = [
-      "Accio Hazel",
-      "Blue",
-      "Charm gray",
-      "Golden brown",
-      "Hermon green",
-      "Oblivion gray",
-      "Turquoise",
-    ];
-
-    List<String> dahabLensColors = [
-      "Blue",
-      "Cappuccino",
-      "Gray",
-      "Green",
-      "Hazel",
-      "Honey",
-    ];
-    List<String> desioLensColors = [
-      "Charming green",
-      "Delicious honey",
-      "Irresistible blue",
-      "Precious gray",
-      "Rebal gray",
-      "Romantic blue",
-      "Tender hazel",
-      "Wild green",
-    ];
-    List<String> luminousLensColors = [
-      "Blue",
-      "Crystal",
-      "Dazzling green",
-      "Gray",
-      "Green",
-      "Hazel",
-      "Lazord",
-      "Latin brown",
-      "Latin gray",
-      "Lemon",
-    ];
-    List<String> bellaEliteLensColors = [
-      "Amber gray",
-      "Crystal N",
-      "Gray beige",
-      "Midnight blue",
-      "Mint gray",
-      "Sandy brown",
-      "Sandy gray",
-      "Silky gold",
-      "Silky green",
-    ];
-    List<String> bellaGlowLensColors = [
-      "Gray caramel",
-      "Husky gray Green",
-      "Lime green",
-      "Luminous blue",
-      "Navy gray",
-      "Radiant brown",
-      "Radiant hazelnut",
-      "Radiant gray",
-      "Vivid blue",
-    ];
-    List<String> bellaLensColors = [
-      "Almond brown",
-      "Brown shadow",
-      "Caribbean green",
-      "Cool blue",
-      "Cool gray",
-      "Cool hazel",
-      "Gray green",
-      "Gray shadow",
-      "Natural blue",
-      "Natural gray",
-      "Natural green",
-      "Natural hazel",
-    ];
-    List<String> transparent = ["Transparent"];
-
-
-
-
-    setState(() {
-      if (selectedLensType == "My lens") {
-        list = myLensColors;
-      } else if (selectedLensType == "Magic") {
-        list = magicLensColors;
-      } else if (selectedLensType == "Dahab") {
-        list = dahabLensColors;
-      } else if (selectedLensType == "Desio") {
-        list = desioLensColors;
-      } else if (selectedLensType == "Luminous") {
-        list = luminousLensColors;
-      } else if (selectedLensType == "Bella elite") {
-        list = bellaEliteLensColors;
-      } else if (selectedLensType == "Bella glow") {
-        list = bellaGlowLensColors;
-      } else if (selectedLensType == "Bella") {
-        list = bellaLensColors;
-      } else if(selectedLensType != null){
-        list = transparent;
-      }
-    });
-
-    setState(() {
-
-      lensColors = list.toList();
-      // selectedLensColor = lensColors.first;
-    });
-
-  }
 
 
   @override
@@ -3787,11 +3839,6 @@ class _AddPrescriptionWindowState extends State<AddPrescriptionWindow> {
   void updateNameOptions(String phoneNumber) async {
 
     Future<void> getNames() async {
-
-      // final MySqlConnection connection = await getDBConnection();
-      // var results = await connection.query(
-      //     'select client_name from clients where client_phone1 = ? or client_phone2 = ?',
-      //     [phoneNumber, phoneNumber]);
 
       String query = 'select client_name from clients where client_phone1 = ? or client_phone2 = ?';
       List<dynamic> params = [phoneNumber, phoneNumber];
@@ -4035,7 +4082,7 @@ class _AddPrescriptionWindowState extends State<AddPrescriptionWindow> {
     clientEmail = TextEditingController();
     phoneNumber.text = widget.text;
     updateNameOptions(phoneNumber.text);
-    UpdateLensColors();
+    getLensNames();
     // Initialize other controllers here if needed
   }
 
@@ -4287,154 +4334,154 @@ class _AddPrescriptionWindowState extends State<AddPrescriptionWindow> {
     );
   }
 
-  Column showLensMenu() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-
-
-            Flexible(
-              child: SizedBox(
-                width: 200,
-                height: 90,
-                child: Directionality(
-                  textDirection: ui.TextDirection.ltr,
-                  child: DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedLensColor = newValue;
-                      });
-                    },
-                    value: selectedLensColor, // Set the selected value for lens color
-                    items: lensColors.map((String option) {
-                      return DropdownMenuItem<String>(
-                        value: option,
-                        child: Text(
-                          option,
-                          style: const TextStyle(
-                            fontSize: 13,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                    hint: const Text(
-                        'اختار لون العدسة',
-                      style: TextStyle(
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(width: 5,),
-            Flexible(
-              child: SizedBox(
-                width: 200,
-                height: 90,
-                child: Directionality(
-                  textDirection: ui.TextDirection.ltr,
-                  child: DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedLensType = newValue; // Update the selectedOption
-                        UpdateLensColors();
-                      });
-                    },
-                    items: lensTypes.map((String option) {
-                      return DropdownMenuItem<String>(
-                        value: option,
-                        child: Text(
-                          option,
-                          style: const TextStyle(
-                            fontSize: 13,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                    hint: const Text(
-                        'اختار نوع العدسة',
-                      style: TextStyle(
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-          ],
-        ),
-        SizedBox(height: 10,),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Flexible(
-              child: SizedBox(
-                width: 200,
-                height: 90,
-                child: Directionality(
-                  textDirection: ui.TextDirection.ltr,
-                  child: DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedSolutionType = newValue;
-                      });
-                    },
-                    items: solutionTypes.map((String option) {
-                      return DropdownMenuItem<String>(
-                        value: option,
-                        child: Text(
-                          option,
-                          style: const TextStyle(
-                            fontSize: 13,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                    hint: const Text(
-                        'اختار نوع المحلول',
-                      style: TextStyle(
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-
-      ],
-    );
-  }
+  // Column showLensMenu() {
+  //   return Column(
+  //     mainAxisAlignment: MainAxisAlignment.center,
+  //     children: [
+  //       Row(
+  //         mainAxisAlignment: MainAxisAlignment.center,
+  //         children: [
+  //
+  //
+  //           Flexible(
+  //             child: SizedBox(
+  //               width: 200,
+  //               height: 90,
+  //               child: Directionality(
+  //                 textDirection: ui.TextDirection.ltr,
+  //                 child: DropdownButtonFormField<String>(
+  //                   decoration: InputDecoration(
+  //                     enabledBorder: OutlineInputBorder(
+  //                       borderRadius: BorderRadius.circular(30),
+  //                     ),
+  //                     border: OutlineInputBorder(
+  //                       borderRadius: BorderRadius.circular(30),
+  //                     ),
+  //                   ),
+  //                   onChanged: (String? newValue) {
+  //                     setState(() {
+  //                       selectedLensColor = newValue;
+  //                     });
+  //                   },
+  //                   value: selectedLensColor, // Set the selected value for lens color
+  //                   items: lensColors.map((String option) {
+  //                     return DropdownMenuItem<String>(
+  //                       value: option,
+  //                       child: Text(
+  //                         option,
+  //                         style: const TextStyle(
+  //                           fontSize: 13,
+  //                         ),
+  //                       ),
+  //                     );
+  //                   }).toList(),
+  //                   hint: const Text(
+  //                       'اختار لون العدسة',
+  //                     style: TextStyle(
+  //                       fontSize: 13,
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //           SizedBox(width: 5,),
+  //           Flexible(
+  //             child: SizedBox(
+  //               width: 200,
+  //               height: 90,
+  //               child: Directionality(
+  //                 textDirection: ui.TextDirection.ltr,
+  //                 child: DropdownButtonFormField<String>(
+  //                   decoration: InputDecoration(
+  //                     enabledBorder: OutlineInputBorder(
+  //                       borderRadius: BorderRadius.circular(30),
+  //                     ),
+  //                     border: OutlineInputBorder(
+  //                       borderRadius: BorderRadius.circular(30),
+  //                     ),
+  //                   ),
+  //                   onChanged: (String? newValue) {
+  //                     setState(() {
+  //                       selectedLensType = newValue; // Update the selectedOption
+  //                       UpdateLensColors();
+  //                     });
+  //                   },
+  //                   items: lensTypes.map((String option) {
+  //                     return DropdownMenuItem<String>(
+  //                       value: option,
+  //                       child: Text(
+  //                         option,
+  //                         style: const TextStyle(
+  //                           fontSize: 13,
+  //                         ),
+  //                       ),
+  //                     );
+  //                   }).toList(),
+  //                   hint: const Text(
+  //                       'اختار نوع العدسة',
+  //                     style: TextStyle(
+  //                       fontSize: 13,
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //
+  //         ],
+  //       ),
+  //       SizedBox(height: 10,),
+  //       Row(
+  //         mainAxisAlignment: MainAxisAlignment.center,
+  //         children: [
+  //           Flexible(
+  //             child: SizedBox(
+  //               width: 200,
+  //               height: 90,
+  //               child: Directionality(
+  //                 textDirection: ui.TextDirection.ltr,
+  //                 child: DropdownButtonFormField<String>(
+  //                   decoration: InputDecoration(
+  //                     enabledBorder: OutlineInputBorder(
+  //                       borderRadius: BorderRadius.circular(30),
+  //                     ),
+  //                     border: OutlineInputBorder(
+  //                       borderRadius: BorderRadius.circular(30),
+  //                     ),
+  //                   ),
+  //                   onChanged: (String? newValue) {
+  //                     setState(() {
+  //                       selectedSolutionType = newValue;
+  //                     });
+  //                   },
+  //                   items: solutionTypes.map((String option) {
+  //                     return DropdownMenuItem<String>(
+  //                       value: option,
+  //                       child: Text(
+  //                         option,
+  //                         style: const TextStyle(
+  //                           fontSize: 13,
+  //                         ),
+  //                       ),
+  //                     );
+  //                   }).toList(),
+  //                   hint: const Text(
+  //                       'اختار نوع المحلول',
+  //                     style: TextStyle(
+  //                       fontSize: 13,
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //
+  //     ],
+  //   );
+  // }
 
 
 
@@ -5187,10 +5234,104 @@ class _AddPrescriptionWindowState extends State<AddPrescriptionWindow> {
 
               const SizedBox(height: 20),
 
+              if(isLensSelected)
+                for(int i = 0; i < lensDataList.length; i++)
+                  LensRow(
+                    rowNumber: i + 1,
+                    lensNames: lensNames,
+                    lensColors: lensColors,
+                    onRemove2: () {
+                      setState(() {
+                        removeLensInput(i);
+                      });
+                    },
+                    selectedLensName: lensDataList[i].name,
+                    selectedLensColor: lensDataList[i].color,
+                    lensQuantity: TextEditingController(text: lensDataList[i].quantity),
+                    onLensNameChanged: (newName) {
+                      setState(() {
+                        lensDataList[i] = lensDataList[i].copyWith(name: newName);
+                        getLensColors(newName!);
+                      });
+                    },
+                    onLensColorChanged: (newColor) {
+                      setState(() {
+                        lensDataList[i] = lensDataList[i].copyWith(color: newColor);
+                      });
+                    },
+
+                    onLensQuantityChanged: (newQuantity) {
+                      lensDataList[i] = lensDataList[i].copyWith(quantity: newQuantity);
+                    },
+                  ),
+
+              SizedBox(height: 30,),
               Visibility(
-                visible: (isLensSelected),
-                child: showLensMenu(),
+                visible: isLensSelected,
+                child: ElevatedButton(
+                  style: ButtonStyle(
+                    minimumSize: MaterialStateProperty.all(const Size(150, 25)),
+                  ),
+                  onPressed: () {
+                    addLensInput('', '', '');
+                  },
+                  child: Text('اضافة عدسة'),
+                ),
               ),
+              SizedBox(height: 30),
+              Visibility(
+                visible: isLensSelected,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: SizedBox(
+                        width: 225,
+                        height: 90,
+                        child: Directionality(
+                          textDirection: ui.TextDirection.ltr,
+                          child: DropdownButtonFormField<String>(
+                            // decoration: InputDecoration(
+                            //   enabledBorder: UnderlineInputBorder(
+                            //     borderRadius: BorderRadius.circular(30),
+                            //   ),
+                            //   border: OutlineInputBorder(
+                            //     borderRadius: BorderRadius.circular(30),
+                            //   ),
+                            // ),
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                selectedSolutionType = newValue;
+                              });
+                            },
+                            items: solutionNames.map((String option) {
+                              return DropdownMenuItem<String>(
+                                value: option,
+                                child: Text(
+                                  option,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                            hint: const Text(
+                                'اختار نوع المحلول',
+                              style: TextStyle(
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 30,),
+
+
 
               const SizedBox(height: 10,),
 
